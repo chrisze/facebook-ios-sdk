@@ -343,7 +343,12 @@ static NSString *const FBSDKExpectedChallengeKey = @"expected_login_challenge";
     case FBSDKLoginBehaviorNative: {
       if ([FBSDKInternalUtility isFacebookAppInstalled]) {
         [FBSDKServerConfigurationManager loadServerConfigurationWithCompletionBlock:^(FBSDKServerConfiguration *serverConfiguration, NSError *loadError) {
+          // Workaround for the new iOS 9 behavior: https://developers.facebook.com/blog/post/2015/10/29/Facebook-Login-iOS9
           BOOL useNativeDialog = [serverConfiguration useNativeDialogForDialogName:FBSDKDialogConfigurationNameLogin];
+          id override = [[NSUserDefaults standardUserDefaults] objectForKey:@"useFastAppSwitchingForFacebookLogin"];
+          if ([override isKindOfClass:[NSNumber class]]) {
+              useNativeDialog = ((NSNumber *)override).boolValue;
+          }
           if (useNativeDialog && loadError == nil) {
             [self performNativeLogInWithParameters:loginParams handler:^(BOOL openedURL, NSError *openedURLError) {
               if (openedURLError) {
